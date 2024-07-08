@@ -28,9 +28,6 @@
 # Script to download Newrcom NRC7394 driver and build a kernel 
 # module from source code and install it in the running system.
 
-# TODO: fix debian files & directories permissions
-# TODO: add /etc/modprobe/nrc.conf file
-
 # NOTE: modify the following variables for the proper values
 MAINTAINER_NAME_EMAIL="Teledatics Incorporated <support@teledatics.com>"
 DKMS_REPO_URL="https://github.com/teledatics/nrc7394_sw_pkg -b nrc-dkms"
@@ -57,7 +54,7 @@ MODULE_MAJOR=$(grep VERSION_MAJOR $NRC_SRC/package/VERSION-SDK | sed s/VERSION_M
 MODULE_MINOR=$(grep VERSION_MINOR $NRC_SRC/package/VERSION-SDK | sed s/VERSION_MINOR=*.//)
 MODULE_REVISION=$(grep VERSION_REVISION $NRC_SRC/package/VERSION-SDK | sed s/VERSION_REVISION=*.//)
 MODULE_REVISION=${MODULE_REVISION:-0}
-MODULE_VERSION="$MODULE_MAJOR.$MODULE_MINOR.$VERSION_REVISION"
+MODULE_VERSION="$MODULE_MAJOR.$MODULE_MINOR.$MODULE_REVISION"
 
 if [ -z "$MODULE_MAJOR" -a ! "$MODULE_MAJOR" ]; then
 	exit 1;
@@ -104,8 +101,9 @@ CLEAN="make KERNEL_DIR=/usr/src/linux-headers-$(uname -r) clean"
 PACKAGE_NAME="$MODULE_NAME"
 PACKAGE_VERSION="$MODULE_VERSION"
 BUILT_MODULE_NAME[0]="$MODULE_NAME"
+BUILD_DEPENDS[0]="debhelper"
 DEST_MODULE_LOCATION[0]="/updates"
-REMAKE_INITRD=yes
+#REMAKE_INITRD=yes
 AUTOINSTALL=yes
 EOF
 

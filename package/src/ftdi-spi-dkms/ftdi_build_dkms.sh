@@ -28,8 +28,6 @@
 # Script to download Teledatics FTDI USB-SPI driver and build a kernel 
 # module from source code and install it in the running system.
 
-# TODO: fix debian files & directories permissions
-
 # NOTE: modify the following variables for the proper values
 MAINTAINER_NAME_EMAIL="Teledatics Incorporated <support@teledatics.com>"
 DKMS_REPO_URL="https://github.com/teledatics/ftdi-spi-linux"
@@ -84,8 +82,9 @@ CLEAN="make KERNEL_DIR=/usr/src/linux-headers-$(uname -r) clean"
 PACKAGE_NAME="$MODULE_NAME"
 PACKAGE_VERSION="$MODULE_VERSION"
 BUILT_MODULE_NAME[0]="$MODULE_NAME"
+BUILD_DEPENDS[0]="debhelper"
 DEST_MODULE_LOCATION[0]="/updates"
-REMAKE_INITRD=yes
+# REMAKE_INITRD=yes
 AUTOINSTALL=yes
 EOF
 
@@ -159,4 +158,4 @@ echo " successfully! ##################"
 
 # Clean up
 cp ../$MODULE_NAME-dkms_$MODULE_VERSION*.deb $CUR_DIR
-# rm -rf $TEMP_DIR
+rm -rf $TEMP_DIR
