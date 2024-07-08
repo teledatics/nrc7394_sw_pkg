@@ -56,6 +56,7 @@ cp -f $NRC_SRC/package/src/nrc/* $WORK_DIR/ 2>/dev/null
 MODULE_MAJOR=$(grep VERSION_MAJOR $NRC_SRC/package/VERSION-SDK | sed s/VERSION_MAJOR=*.//)
 MODULE_MINOR=$(grep VERSION_MINOR $NRC_SRC/package/VERSION-SDK | sed s/VERSION_MINOR=*.//)
 MODULE_REVISION=$(grep VERSION_REVISION $NRC_SRC/package/VERSION-SDK | sed s/VERSION_REVISION=*.//)
+MODULE_REVISION=${MODULE_REVISION:-0}
 MODULE_VERSION="$MODULE_MAJOR.$MODULE_MINOR.$VERSION_REVISION"
 
 if [ -z "$MODULE_MAJOR" -a ! "$MODULE_MAJOR" ]; then
@@ -75,6 +76,22 @@ cp $NRC_SRC/package/evk/sw_pkg/nrc_pkg/sw/firmware/nrc*.dat $MISC_DIR/
 
 FIRMWARE_FILE=$(ls $MISC_DIR/nrc*.bin | grep "nrc" | tail -n 1)
 BOARD_FILE=$(ls $MISC_DIR/nrc*.dat | grep "nrc" | tail -n 1)
+
+# Copy modprobe conf file
+MODPROBE_DIR="$TEMP_DIR/modprobe"
+mkdir -p $MODPROBE_DIR
+
+cp $NRC_SRC/package/src/nrc-dkms/nrc*.conf $MODPROBE_DIR/
+
+MODPROBE_FILES=$(ls $MODPROBE_DIR/nrc* | grep "nrc" | tail -n 1)
+
+# Copy helper scripts
+SCRIPT_DIR="$TEMP_DIR/bin"
+mkdir -p $SCRIPT_DIR
+
+cp $NRC_SRC/package/src/nrc-dkms/nrc*.sh $SCRIPT_DIR/
+
+SCRIPT_FILES=$(ls $SCRIPT_DIR/nrc* | grep "nrc" | tail -n 1)
 
 # Move to the working directory
 CUR_DIR=$(pwd)
@@ -132,6 +149,24 @@ mv $TEMP_DIR/misc $MOD_DIR
 if [ ! -z "$FIRMWARE_FILE" ]; then
 cat > $MOD_DIR/debian/$MODULE_NAME-dkms.install <<EOF
 misc/* lib/firmware
+EOF
+fi
+
+# Add modprobe file
+mv $TEMP_DIR/modprobe $MOD_DIR
+
+if [ ! -z "$MODPROBE_FILES" ]; then
+cat > $MOD_DIR/debian/$MODULE_NAME-dkms.install <<EOF
+modprobe/* etc/modprobe.d
+EOF
+fi
+
+# Add helper scripts
+mv $TEMP_DIR/bin $MOD_DIR
+
+if [ ! -z "$SCRIPT_FILES" ]; then
+cat > $MOD_DIR/debian/$MODULE_NAME-dkms.install <<EOF
+bin/* usr/local/bin
 EOF
 fi
 
