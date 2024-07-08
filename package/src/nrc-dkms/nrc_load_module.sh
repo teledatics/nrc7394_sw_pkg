@@ -9,9 +9,9 @@ MOD_NAME="nrc"
 MOD_PATH_NAME=`ls ${MOD_PATH}/${MOD_NAME}*`
 
 # exit if FTDI USB-SPI module not loaded
-if [ "${SPI_GPIO_NO}" == "-1" ]; then
-	exit -1;
-fi
+# if [ "${SPI_GPIO_NO}" == "-1" ]; then
+# 	exit -1;
+# fi
 
 # exit if nrc module already loaded
 if lsmod | grep -Eq "^${MOD_NAME} "; then

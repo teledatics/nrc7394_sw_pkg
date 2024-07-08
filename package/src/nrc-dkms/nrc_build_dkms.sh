@@ -154,7 +154,7 @@ fi
 mv $TEMP_DIR/modprobe $MOD_DIR
 
 if [ ! -z "$MODPROBE_FILES" ]; then
-cat > $MOD_DIR/debian/$MODULE_NAME-dkms.install <<EOF
+cat >> $MOD_DIR/debian/$MODULE_NAME-dkms.install <<EOF
 modprobe/* etc/modprobe.d
 EOF
 fi
@@ -163,7 +163,7 @@ fi
 mv $TEMP_DIR/bin $MOD_DIR
 
 if [ ! -z "$SCRIPT_FILES" ]; then
-cat > $MOD_DIR/debian/$MODULE_NAME-dkms.install <<EOF
+cat >> $MOD_DIR/debian/$MODULE_NAME-dkms.install <<EOF
 bin/* usr/local/bin
 EOF
 fi
