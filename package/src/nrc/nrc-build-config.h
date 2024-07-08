@@ -215,7 +215,7 @@
 #endif
 
 /* Prefer dynamic spi over device tree */
-#if !defined(CONFIG_SPI_USE_DT) && KERNEL_VERSION(5, 16, 0) <= NRC_TARGET_KERNEL_VERSION
+#if defined(CONFIG_SPI_USE_DT) && KERNEL_VERSION(5, 16, 0) <= NRC_TARGET_KERNEL_VERSION
 #define CONFIG_SPI_DYNAMIC
 #undef CONFIG_SPI_USE_DT
 #endif
