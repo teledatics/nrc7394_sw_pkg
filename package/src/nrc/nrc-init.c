@@ -298,7 +298,7 @@ MODULE_PARM_DESC(power_save_gpio, "gpio for power save");
 /**
  * Maximum beacon loss count
  */
-int beacon_loss_count = 7;
+int beacon_loss_count = 20;
 module_param(beacon_loss_count, int, 0600);
 MODULE_PARM_DESC(beacon_loss_count, "Number of beacon intervals before we decide beacon was lost");
 

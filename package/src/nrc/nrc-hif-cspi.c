@@ -208,6 +208,7 @@ struct nrc_cspi_ops {
 int spi_test(struct nrc_hif_device *hdev);
 void spi_reset_device (struct nrc_hif_device *hdev);
 void spi_reset_rx (struct nrc_hif_device *hdev);
+void spi_reset_tx (struct nrc_hif_device *hdev);
 static int spi_update_status(struct spi_device *spi);
 static void c_spi_enable_irq(struct spi_device *spi, bool enable, u8 mask);
 static void c_spi_config(struct nrc_spi_priv *priv);;
@@ -709,12 +710,19 @@ static struct sk_buff *spi_rx_skb(struct spi_device *spi,
 		spi_update_status(priv->spi);
 
 	/*
-	 * Block until priv->nr_rx_slot >= nr_slot).
-	 * The irq thread will wake me up.
+	 * Wait until priv->nr_rx_slot >= nr_slot or 100ms.
+	 * If nr_cnt is too large, it could be a hif error.
 	 */
-	ret = wait_event_interruptible(priv->wait,
+	ret = wait_event_interruptible_timeout(priv->wait,
 				(c_spi_num_slots(priv, RX_SLOT) >= nr_slot) ||
-				kthread_should_stop() || kthread_should_park());
+				kthread_should_stop() || kthread_should_park(),
+				msecs_to_jiffies(100));
+
+	if (ret == 0) { /* Timeout */
+		nrc_dbg(NRC_DBG_HIF, "wait_event_interruptible timeout (nr_slot:%d gap:%d)\n",
+								nr_slot, c_spi_num_slots(priv, RX_SLOT));
+		goto fail;
+	}
 	if (ret < 0)
 		goto fail;
 
@@ -1394,9 +1402,14 @@ update:
 
 	if (c_spi_num_slots(priv, TX_SLOT) > 32) {
 		nrc_dbg(NRC_DBG_COMMON,"[%s,L%d]* TX_gap:%u head:%u vs tail:%u",
-			__func__, __LINE__, c_spi_num_slots(priv, TX_SLOT),
-			priv->slot[TX_SLOT].head, priv->slot[TX_SLOT].tail);
-		priv->slot[TX_SLOT].tail = priv->slot[TX_SLOT].head = 0;
+				__func__, __LINE__, c_spi_num_slots(priv, TX_SLOT),
+				priv->slot[TX_SLOT].head, priv->slot[TX_SLOT].tail);
+		if (priv->hw.sys.chip_id == 0x7394 && nw->drv_state == NRC_DRV_PS &&
+				((status->msg[3] & 0xffff) == TARGET_NOTI_REQUEST_FW_DOWNLOAD)) {
+			priv->slot[TX_SLOT].tail = priv->slot[TX_SLOT].head = 0;
+		} else {
+			spi_reset_tx(hdev);
+		}
 	}
 
 	if (c_spi_num_slots(priv, RX_SLOT) > 33) {
@@ -1950,6 +1963,19 @@ void spi_reset_device(struct nrc_hif_device *hdev)
 	c_spi_write_reg(spi, C_SPI_DEVICE_STATUS, 0xC8);
 }
 
+static void spi_disable_irq(struct nrc_hif_device *hdev)
+{
+	struct nrc_spi_priv *priv = hdev->priv;
+	struct spi_device *spi = priv->spi;
+
+	if (spi->irq >= 0) {
+		if (priv->polling_interval <= 0) {
+			//disable_irq(spi->irq);
+			disable_irq_nosync(spi->irq);
+		}
+	}
+}
+
 void spi_reset_rx (struct nrc_hif_device *hdev)
 {
 	struct nrc_spi_priv *priv = hdev->priv;
@@ -1959,6 +1985,25 @@ void spi_reset_rx (struct nrc_hif_device *hdev)
 	dev_err(&spi->dev, "Reset SPI RX\n");
 	priv->slot[RX_SLOT].tail = priv->slot[RX_SLOT].head = 0;
 	nrc_wim_reset_hif_tx(nw);
+}
+
+void spi_reset_tx (struct nrc_hif_device *hdev)
+{
+	struct nrc_spi_priv *priv = hdev->priv;
+	struct spi_device *spi = priv->spi;
+	struct nrc *nw = spi_get_drvdata(spi);
+	spi_disable_irq(hdev);
+	c_spi_enable_irq(spi, false, CSPI_EIRQ_A_ENABLE);
+	dev_err(&spi->dev, "Reset SPI TX\n");
+
+	nrc_wim_reset_hif_rx(nw);
+
+	/* wim itself is tx frame, so set -1, not 0 */
+	priv->slot[TX_SLOT].tail = -1;
+	priv->slot[TX_SLOT].head = 32;
+
+	spi_enable_irq(hdev);
+	c_spi_enable_irq(spi, true, CSPI_EIRQ_A_ENABLE);
 }
 
 static void spi_disable_irq(struct nrc_hif_device *hdev);
@@ -2066,19 +2111,6 @@ static void spi_sync_unlock(struct nrc_hif_device *hdev)
 	struct nrc_spi_priv *priv = hdev->priv;
 
 	mutex_unlock(&priv->bus_lock_mutex);
-}
-
-static void spi_disable_irq(struct nrc_hif_device *hdev)
-{
-	struct nrc_spi_priv *priv = hdev->priv;
-	struct spi_device *spi = priv->spi;
-
-	if (spi->irq >= 0) {
-		if (priv->polling_interval <= 0) {
-			//disable_irq(spi->irq);
-			disable_irq_nosync(spi->irq);
-		}
-	}
 }
 
 static void spi_enable_irq(struct nrc_hif_device *hdev)
@@ -2239,6 +2271,7 @@ static struct nrc_hif_ops spi_ops = {
 	.close = spi_close,
 	.reset_device = spi_reset_device,
 	.reset_rx = spi_reset_rx,
+	.reset_tx = spi_reset_tx,
 	.wakeup = spi_wakeup,
 	.test = spi_test,
 	.config = spi_config_fw,

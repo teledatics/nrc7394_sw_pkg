@@ -207,4 +207,8 @@ Tx power index for MCS 6,Tx power index for MCS 7,Tx power index for MCS 10"
 #define SHOW_RC_PARAM_KEY_DISP	"%ld,%d,%d"
 #define SHOW_RC_PARAM_KEY_LIST	"EWMA(%),Update interval(ms),Probe interval(ms)"
 
+/* show rxgain_table */
+#define SHOW_RXGAIN_TABLE_KEY_DISP	"%x"
+#define SHOW_RXGAIN_TABLE_KEY_LIST	"idx,"
+
 #endif /* _CLI_KEY_LIST_H_ */

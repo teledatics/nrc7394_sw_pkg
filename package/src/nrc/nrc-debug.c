@@ -311,6 +311,9 @@ static int nrc_debugfs_reset_device_write(void *data, u64 val)
 	struct nrc_hif_device *hdev = nw->hif;
 
 	nrc_hif_reset_device(hdev);
+#if 0
+	nrc_hif_reset_tx(hdev); /* tx reset test */
+#endif
 	return 0;
 }
 
