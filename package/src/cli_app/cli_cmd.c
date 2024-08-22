@@ -137,6 +137,7 @@ static int cmd_set_bcn_mcs(cmd_tbl_t *t, int argc, char *argv[]);
 static int cmd_set_bgscan_trx(cmd_tbl_t *t, int argc, char *argv[]);
 static int cmd_set_scan_period(cmd_tbl_t *t, int argc, char *argv[]);
 static int cmd_set_mesh_rssi_threshold(cmd_tbl_t *t, int argc, char *argv[]);
+static int cmd_set_1m_prim_loc(cmd_tbl_t *t, int argc, char *argv[]);
 
 
 /*******************************************************************************
@@ -199,6 +200,8 @@ const char not_matched_cc_str[] = "not_matched_country";
 const char not_matched_cc_msg[] = "is not the currently set country";
 const char not_supported_cc_str[] = "not_supported_country";
 const char not_supported_cc_msg[] = "is not supported country";
+const char no_channel_cc_str[] = "no_channels_available";
+const char no_channel_msg[] = "There are no channels available";
 
 /*******************************************************************************
 * command list
@@ -278,6 +281,7 @@ cmd_tbl_t set_sub_list[] = {
 	{ "bgscan_trx", cmd_set_bgscan_trx, "set bgscan_trx ", "set bgscan_trx [1:enable|0:disable] [wait time operation ch for rx: (0~100)msec]", "", 0},
 	{ "scan_period", cmd_set_scan_period, "set scan_period", "set scan_period [dwell time (min 20ms)]", "", 0},
 	{ "mesh_rssi_threshold", cmd_set_mesh_rssi_threshold, "set mesh_rssi_threshold ", "set mesh_rssi_threshold {-120~-10dBm}", "", 0},
+	{ "prim_loc", cmd_set_1m_prim_loc, "set 1M primary location for sniffer ", "set prim_loc [0|1|2|3]", "", 0},
 };
 
 /* sub command list on test */
@@ -352,7 +356,7 @@ cmd_tbl_t * get_cmd_list(enum cmd_list_type type, int *list_size, int *list_dept
 			*list_size = sizeof(show_stats_sub_list)/sizeof(cmd_tbl_t);
 			*list_depth = 2;
 			break;
-		case SHWO_MAC_SUB_CMD:
+		case SHOW_MAC_SUB_CMD:
 			ret = show_mac_sub_list;
 			*list_size = sizeof(show_mac_sub_list)/sizeof(cmd_tbl_t);
 			*list_depth = 2;
@@ -550,7 +554,7 @@ static int cmd_help(cmd_tbl_t *t, int argc, char *argv[])
 	cmd_list_display(MAIN_CMD);
 	cmd_list_display(SHOW_SUB_CMD);
 	cmd_list_display(SHOW_STATS_SUB_CMD);
-	cmd_list_display(SHWO_MAC_SUB_CMD);
+	cmd_list_display(SHOW_MAC_SUB_CMD);
 	cmd_list_display(SHOW_MAC_TX_SUB_CMD);
 	cmd_list_display(SHOW_MAC_RX_SUB_CMD);
 	cmd_list_display(SET_SUB_CMD);
@@ -827,7 +831,7 @@ static int cmd_show_mac(cmd_tbl_t *t, int argc, char *argv[])
 {
 	int ret = CMD_RET_FAILURE;
 	int sub_cmd_list_size, sub_cmd_list_depth;
-	cmd_tbl_t * sub_cmd_list = get_cmd_list(SHWO_MAC_SUB_CMD, &sub_cmd_list_size, &sub_cmd_list_depth);
+	cmd_tbl_t * sub_cmd_list = get_cmd_list(SHOW_MAC_SUB_CMD, &sub_cmd_list_size, &sub_cmd_list_depth);
 
 	if(argc == sub_cmd_list_depth){
 		printf("There is no sub command. Please see the help.\n");
@@ -1787,11 +1791,8 @@ static int cmd_optimal_channel(cmd_tbl_t *t, int argc, char *argv[])
 	memset(param, 0x0, sizeof(param));
 
 	if (argc == 5) {
-		if (!strcmp(argv[2], "K1") ||
-			!strcmp(argv[2], "K2") ||
-			!strcmp(argv[2], "JP") ||
-			!strcmp(argv[2], "EU")) {
-			printf("K1/K2/JP/EU is not supported.\n");
+		if (!strcmp(argv[2], "CN")) {
+			printf("CN is not supported.\n");
 			return CMD_RET_FAILURE;
 		} else if (atoi(argv[3]) != 1 &&
 			atoi(argv[3]) != 2 &&
@@ -1817,6 +1818,9 @@ static int cmd_optimal_channel(cmd_tbl_t *t, int argc, char *argv[])
 			ret = CMD_RET_FAILURE;
 		} else if (strcmp(response, not_supported_cc_str) == 0) {
 			printf("[%s] %s\n", argv[2], not_supported_cc_msg);
+			ret = CMD_RET_FAILURE;
+		} else if (strcmp(response, no_channel_cc_str) == 0) {
+			printf("%s\n", no_channel_msg);
 			ret = CMD_RET_FAILURE;
 		} else {
 			memcpy(&best_freq, &response[result_idx_ptr], sizeof(best_freq));
@@ -2412,14 +2416,22 @@ static int cmd_set_scan_period(cmd_tbl_t *t, int argc, char *argv[])
 
 static int cmd_set_mesh_rssi_threshold(cmd_tbl_t *t, int argc, char *argv[])
 {
-	int ret = CMD_RET_SUCCESS;
-
 	if (atoi(argv[2]) > -10 || atoi(argv[2]) < -120) {
 		printf("usage : %s\n", (char*)t->usage);
 		return CMD_RET_FAILURE;
 	}
 
 	return run_driver_cmd(t, argc, argv, "set mesh_rssi_threshold", NULL, 0);
+}
+
+static int cmd_set_1m_prim_loc(cmd_tbl_t *t, int argc, char *argv[])
+{
+	if (atoi(argv[2]) > 3 || atoi(argv[2]) < 0) {
+		printf("usage : %s\n", (char*)t->usage);
+		return CMD_RET_FAILURE;
+	}
+
+	return run_shell_cmd(t, argc, argv, "set prim_loc", NULL, 0);
 }
 
 

@@ -81,6 +81,7 @@ struct nrc_hif_ops {
 	void (*close)(struct nrc_hif_device *dev);
 	void (*reset_device)(struct nrc_hif_device *dev);
 	void (*reset_rx)(struct nrc_hif_device *dev);
+	void (*reset_tx)(struct nrc_hif_device *dev);
 	void (*wakeup)(struct nrc_hif_device *dev);
 	int (*test)(struct nrc_hif_device *dev);
 	void (*config)(struct nrc_hif_device *dev);
@@ -416,6 +417,8 @@ int nrc_hif_debug_rx(void);
 int nrc_hif_close(struct nrc_hif_device *dev);
 int nrc_hif_wakeup_device(struct nrc_hif_device *dev);
 int nrc_hif_reset_device(struct nrc_hif_device *dev);
+int nrc_hif_reset_rx (struct nrc_hif_device *dev);
+int nrc_hif_reset_tx (struct nrc_hif_device *dev);
 int nrc_hif_test_status(struct nrc_hif_device *dev);
 void nrc_hif_down(struct nrc *nw);
 void nrc_hif_up(struct nrc *nw);

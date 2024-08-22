@@ -154,6 +154,7 @@ int nrc_wim_set_p2p_addr(struct nrc *nw, struct ieee80211_vif *vif);
 
 bool nrc_wim_request_keep_alive(struct nrc *nw);
 bool nrc_wim_reset_hif_tx (struct nrc *nw);
+bool nrc_wim_reset_hif_rx (struct nrc *nw);
 void nrc_wim_handle_fw_request(struct nrc *nw);
 
 enum wim_cipher_type nrc_to_wim_cipher_type(u32 cipher);

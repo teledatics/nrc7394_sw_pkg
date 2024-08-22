@@ -2021,6 +2021,13 @@ static void nrc_init_sta_ba_session(struct ieee80211_sta *sta)
 			for (i=0 ; i < NRC_MAX_TID; i++) {
 				i_sta->tx_ba_session[i] = IEEE80211_BA_NONE;
 				i_sta->ba_req_last_jiffies[i] = 0;
+				i_sta->rx_ba_session[i].started = false;
+				i_sta->rx_ba_session[i].sn = 0;
+#if KERNEL_VERSION(4, 19, 0) <= NRC_TARGET_KERNEL_VERSION
+				i_sta->rx_ba_session[i].buf_size = IEEE80211_MAX_AMPDU_BUF_HT;
+#else
+				i_sta->rx_ba_session[i].buf_size = IEEE80211_MAX_AMPDU_BUF;
+#endif
 			}
 		}
 	}
@@ -2318,6 +2325,8 @@ static int nrc_mac_ampdu_action(struct ieee80211_hw *hw,
 	enum ieee80211_ampdu_mlme_action action = params->action;
 	struct ieee80211_sta *sta = params->sta;
 	u16 tid = params->tid;
+	u16 *ssn = &params->ssn;
+	u16 buf_size = params->buf_size;
 #endif
 
 	if (nw->ampdu_supported && !nw->ampdu_started) {
@@ -2382,6 +2391,9 @@ static int nrc_mac_ampdu_action(struct ieee80211_hw *hw,
 		return 0;
 	case IEEE80211_AMPDU_RX_START:
 		nrc_dbg(NRC_DBG_MAC, "%s: IEEE80211_AMPDU_RX_START", __func__);
+		i_sta->rx_ba_session[tid].sn = *ssn;
+		i_sta->rx_ba_session[tid].buf_size = buf_size;
+		i_sta->rx_ba_session[tid].started = true;
 		if (nw->ampdu_reject) {
 			nrc_dbg(NRC_DBG_MAC, "%s: Reject AMPDU", __func__);
 			return -EOPNOTSUPP;
@@ -2389,6 +2401,7 @@ static int nrc_mac_ampdu_action(struct ieee80211_hw *hw,
 		return 0;
 	case IEEE80211_AMPDU_RX_STOP:
 		nrc_dbg(NRC_DBG_MAC, "%s: IEEE80211_AMPDU_RX_STOP", __func__);
+		i_sta->rx_ba_session[tid].started = false;
 		if (nw->ampdu_reject) {
 			nrc_dbg(NRC_DBG_MAC, "%s: Reject AMPDU", __func__);
 			return -EOPNOTSUPP;

@@ -610,6 +610,14 @@ bool nrc_wim_reset_hif_tx (struct nrc *nw)
 	return (ret == 0);
 }
 
+bool nrc_wim_reset_hif_rx (struct nrc *nw)
+{
+	int ret;
+
+	ret = nrc_xmit_wim_simple_request(nw, WIM_CMD_RESET_HIF_RX);
+	return (ret == 0);
+}
+
 void nrc_wim_handle_fw_ready(struct nrc *nw)
 {
 	struct nrc_hif_device *hdev = nw->hif;

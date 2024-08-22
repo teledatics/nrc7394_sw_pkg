@@ -1120,6 +1120,16 @@ int nrc_hif_reset_rx (struct nrc_hif_device *dev)
 	return -1;
 }
 
+int nrc_hif_reset_tx (struct nrc_hif_device *dev)
+{
+	if (dev->hif_ops->reset_tx) {
+		dev->hif_ops->reset_tx(dev);
+		return 0;
+	}
+
+	return -1;
+}
+
 int nrc_hif_test_status(struct nrc_hif_device *dev)
 {
 	if (dev->hif_ops->test)
