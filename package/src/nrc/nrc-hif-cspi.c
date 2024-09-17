@@ -1797,9 +1797,9 @@ static int spi_start(struct nrc_hif_device *dev)
 
 		if (ret < 0) {
 #ifdef CONFIG_SUPPORT_THREADED_IRQ
-			pr_err("request_irq() is failed");
+			pr_err("request_threaded_irq() failed");
 #else
-			pr_err("request_threaded_irq() is failed");
+			pr_err("request_irq() failed");
 #endif
 			goto kill_kthread;
 		}
@@ -2482,6 +2482,8 @@ static struct nrc_spi_priv *nrc_cspi_alloc (struct spi_device *dev)
 
 static void nrc_cspi_free (struct nrc_spi_priv *priv)
 {	
+	spi_stop(priv->hdev);
+	
 #if !defined(CONFIG_SUPPORT_THREADED_IRQ)
 	flush_workqueue(priv->irq_wq);
 	destroy_workqueue(priv->irq_wq);
@@ -2597,6 +2599,7 @@ static void nrc_cspi_remove(struct spi_device *spi)
 	nrc_cspi_gpio_free(spi);
 
 	nrc_cspi_free(priv);
+	
 #if NRC_TARGET_KERNEL_VERSION < KERNEL_VERSION(5,18,0)
 	return 0;
 #endif
