@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: GPL-2.0
 KDIR ?= /lib/modules/$(shell uname -r)/build
 CHECKPATCH ?= $(KDIR)/scripts/checkpatch.pl
+KDIR_CONFIG ?= $(KDIR)
 
-include $(KDIR)/.config
+include $(KDIR_CONFIG)/.config
 
 M_SRC = nrc
 
@@ -47,7 +48,7 @@ cleanall: clean all
 
 modules:
 	@echo $(NRCLINUXHOSTDIR)
-	@$(MAKE) -C $(KDIR) M=$$PWD modules
+	@$(MAKE) -C $(KDIR) M=$$PWD modules KBUILD_EXTRA_SYMBOLS=$(BACKPORTS_SYMVERS)
 
 modules_install:
 	@$(MAKE) -C $(KDIR) M=$$PWD modules_install
