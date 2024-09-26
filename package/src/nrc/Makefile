@@ -3,6 +3,10 @@ KDIR ?= /lib/modules/$(shell uname -r)/build
 CHECKPATCH ?= $(KDIR)/scripts/checkpatch.pl
 KDIR_CONFIG ?= $(KDIR)
 
+ifneq ($(EXTRA_SYMVERS),)
+	override KBUILD_EXTRA_SYMBOLS := $(EXTRA_SYMVERS)
+endif
+
 include $(KDIR_CONFIG)/.config
 
 M_SRC = nrc
@@ -48,7 +52,8 @@ cleanall: clean all
 
 modules:
 	@echo $(NRCLINUXHOSTDIR)
-	@$(MAKE) -C $(KDIR) M=$$PWD modules KBUILD_EXTRA_SYMBOLS=$(BACKPORTS_SYMVERS)
+	@echo $(NRC_TARGET_KERNEL_VERSION)
+	@$(MAKE) -C $(KDIR) M=$$PWD modules
 
 modules_install:
 	@$(MAKE) -C $(KDIR) M=$$PWD modules_install
