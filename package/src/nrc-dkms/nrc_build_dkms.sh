@@ -173,7 +173,7 @@ sed -i '/\tdh_installdirs/i \
 \tdh_install' $MOD_DIR/debian/rules
 
 # update copyright file
-echo "Copyright (c) Newracom Incorporated 2023" > $MOD_DIR/debian/$MODULE_NAME-dkms.copyright
+echo "Copyright (c) Teledatics Incorporated 2023" > $MOD_DIR/debian/$MODULE_NAME-dkms.copyright
 
 # fix permissions
 chmod -R 0644 $MOD_DIR/debian/*
