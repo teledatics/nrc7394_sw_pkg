@@ -425,7 +425,7 @@ static void nrc_flush_txq(struct nrc *nw)
 #endif
 }
 
-unsigned int nrc_ac_credit(struct nrc *nw, int ac)
+static unsigned int nrc_ac_credit(struct nrc *nw, int ac)
 {
 	int ret;
 
@@ -1037,7 +1037,7 @@ bool nrc_access_vif(struct nrc *nw)
 	return false;
 }
 
-const char *iftype_string(enum nl80211_iftype iftype)
+static const char *iftype_string(enum nl80211_iftype iftype)
 {
 	switch (iftype) {
 	case NL80211_IFTYPE_UNSPECIFIED: return "UNSPECIFIED";
@@ -2424,7 +2424,7 @@ static void change_scan_mode(struct nrc *nw, enum NRC_SCAN_MODE new_mode)
 	mutex_unlock(&nw->state_mtx);
 }
 
-void scan_complete(struct ieee80211_hw *hw, bool aborted)
+static void scan_complete(struct ieee80211_hw *hw, bool aborted)
 {
 #ifdef CONFIG_USE_CFG80211_SCAN_INFO
 	struct cfg80211_scan_info info = {
@@ -3230,7 +3230,11 @@ static int nrc_pre_channel_switch(struct ieee80211_hw *hw,struct ieee80211_vif *
 	return 0;
 }
 
+#if KERNEL_VERSION(6, 7, 0) <= NRC_TARGET_KERNEL_VERSION
+static int nrc_post_channel_switch(struct ieee80211_hw *hw, struct ieee80211_vif *vif, struct ieee80211_bss_conf *link_conf)
+#else
 static int nrc_post_channel_switch(struct ieee80211_hw *hw, struct ieee80211_vif *vif)
+#endif
 {
 	nrc_dbg(NRC_DBG_STATE, "[%s, %d] Channel switch complete\n", __func__, __LINE__);
 	return 0;
@@ -3254,7 +3258,7 @@ static struct wiphy_wowlan_support nrc_wowlan_support = {
 	.max_pkt_offset = 16,
 };
 
-void nrc_mac_set_wakeup(struct ieee80211_hw *hw, bool enabled)
+static void nrc_mac_set_wakeup(struct ieee80211_hw *hw, bool enabled)
 {
 	struct nrc *nw = hw->priv;
 	nw->wowlan_enabled = enabled;
@@ -3262,7 +3266,7 @@ void nrc_mac_set_wakeup(struct ieee80211_hw *hw, bool enabled)
 	return;
 }
 
-int nrc_mac_resume(struct ieee80211_hw *hw)
+static int nrc_mac_resume(struct ieee80211_hw *hw)
 {
 	struct nrc *nw = hw->priv;
 
@@ -3279,7 +3283,7 @@ int nrc_mac_resume(struct ieee80211_hw *hw)
 	return 0;
 }
 
-int nrc_mac_suspend(struct ieee80211_hw *hw, struct cfg80211_wowlan *wowlan)
+static int nrc_mac_suspend(struct ieee80211_hw *hw, struct cfg80211_wowlan *wowlan)
 {
 	struct nrc *nw = hw->priv;
 	struct sk_buff *skb;
@@ -3715,7 +3719,7 @@ void remotecmd_callback(unsigned long ptr)
 	struct wireless_dev *wdev = params->wdev;
 	u8 subcmd = params->subcmd;
 #else
-void remotecmd_callback(struct timer_list *t)
+static void remotecmd_callback(struct timer_list *t)
 {
 	struct wiphy *wiphy = remotecmd_params.wiphy;
 	struct wireless_dev *wdev = remotecmd_params.wdev;
@@ -3724,7 +3728,7 @@ void remotecmd_callback(struct timer_list *t)
 	nrc_vendor_cmd_remove(wiphy, wdev, subcmd);
 }
 
-void remotecmd_schedule_off(struct wiphy *wiphy, struct wireless_dev *wdev,
+static void remotecmd_schedule_off(struct wiphy *wiphy, struct wireless_dev *wdev,
 				u8 subcmd, const u8 cntdwn, u16 beacon_int)
 {
 	remotecmd_params.wiphy = wiphy;

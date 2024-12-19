@@ -19,6 +19,7 @@
 
 #include <net/mac80211.h>
 #include "nrc.h"
+#include "nrc-hif-cspi.h"
 
 enum NRC_DEBUG_MASK {
 	NRC_DBG_HIF	= 0,

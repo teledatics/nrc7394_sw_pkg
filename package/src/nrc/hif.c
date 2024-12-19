@@ -344,37 +344,37 @@ static void nrc_hif_ps_work(struct work_struct *work)
 * Parameters : skb(socket buffer)
 * Returns : T/F (bool) T:TCP ACK, F:not TCP ACK
 *******************************************************************************/
-bool is_tcp_ack(struct sk_buff *skb)
-{
-	struct hif *hif;
-	struct ieee80211_hdr *mhdr;
-	struct iphdr *ip_header = ip_hdr(skb);
-	struct tcphdr *tcp_header = tcp_hdr(skb);
-
-	static __u32 raw_seq_num;
-
-	u8 *p;
-	p = (u8*)skb->data;
-	hif = (void*)p;
-
-	if (hif->type != HIF_TYPE_FRAME)
-		return false;
-
-	mhdr = (void*)(p + sizeof(struct hif) + sizeof(struct frame_hdr));
-
-	if (ieee80211_is_data(mhdr->frame_control)) {
-		if ((ip_header->protocol == IPPROTO_TCP) &&
-			(tcp_header->syn) && (tcp_header->ack)) {
-			raw_seq_num = ntohl (tcp_header->seq);
-		}
-		if ((ip_header->protocol == IPPROTO_TCP) && (tcp_header->ack) &&
-			((ntohl(tcp_header->seq) - raw_seq_num) == 1)) {
-			return true;
-		}
-	}
-
-	return false;
-}
+// static bool is_tcp_ack(struct sk_buff *skb)
+// {
+// 	struct hif *hif;
+// 	struct ieee80211_hdr *mhdr;
+// 	struct iphdr *ip_header = ip_hdr(skb);
+// 	struct tcphdr *tcp_header = tcp_hdr(skb);
+// 
+// 	static __u32 raw_seq_num;
+// 
+// 	u8 *p;
+// 	p = (u8*)skb->data;
+// 	hif = (void*)p;
+// 
+// 	if (hif->type != HIF_TYPE_FRAME)
+// 		return false;
+// 
+// 	mhdr = (void*)(p + sizeof(struct hif) + sizeof(struct frame_hdr));
+// 
+// 	if (ieee80211_is_data(mhdr->frame_control)) {
+// 		if ((ip_header->protocol == IPPROTO_TCP) &&
+// 			(tcp_header->syn) && (tcp_header->ack)) {
+// 			raw_seq_num = ntohl (tcp_header->seq);
+// 		}
+// 		if ((ip_header->protocol == IPPROTO_TCP) && (tcp_header->ack) &&
+// 			((ntohl(tcp_header->seq) - raw_seq_num) == 1)) {
+// 			return true;
+// 		}
+// 	}
+// 
+// 	return false;
+// }
 
 /*******************************************************************************
 * FunctionName : is_mgmt
@@ -382,7 +382,7 @@ bool is_tcp_ack(struct sk_buff *skb)
 * Parameters : skb(socket buffer)
 * Returns : T/F (bool) T:management frame, F:not management frame
 *******************************************************************************/
-bool is_mgmt(struct sk_buff *skb)
+static bool is_mgmt(struct sk_buff *skb)
 {
 	struct hif *hif;
 	struct ieee80211_hdr *mhdr;
@@ -408,7 +408,7 @@ bool is_mgmt(struct sk_buff *skb)
 * Parameters : skb(socket buffer)
 * Returns : T/F (bool)
 *******************************************************************************/
-bool is_urgent_frame(struct sk_buff *skb)
+static bool is_urgent_frame(struct sk_buff *skb)
 {
 	bool ret = false;
 	if (is_mgmt(skb))
@@ -521,7 +521,7 @@ static int nrc_hif_enqueue_skb(struct nrc *nw, struct sk_buff *skb)
 /**
  * nrc_hif_tx_wim - trasmit a wim message to target
  */
-int nrc_xmit_wim(struct nrc *nw, struct sk_buff *skb, enum HIF_SUBTYPE stype)
+static int nrc_xmit_wim(struct nrc *nw, struct sk_buff *skb, enum HIF_SUBTYPE stype)
 {
 	struct hif *hif;
 	struct ieee80211_tx_info *txi = IEEE80211_SKB_CB(skb);
