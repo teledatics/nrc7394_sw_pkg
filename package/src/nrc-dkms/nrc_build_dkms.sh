@@ -30,7 +30,7 @@
 
 # NOTE: modify the following variables for the proper values
 MAINTAINER_NAME_EMAIL="Teledatics Incorporated <support@teledatics.com>"
-DKMS_REPO_URL="https://github.com/teledatics/nrc7394_sw_pkg -b nrc-dkms"
+DKMS_REPO_URL="https://github.com/teledatics/nrc7394_sw_pkg -b nrc-dkms-v1.2.2-rc1"
 GPG_KEY=""
 MODULE_NAME="nrc"
 
