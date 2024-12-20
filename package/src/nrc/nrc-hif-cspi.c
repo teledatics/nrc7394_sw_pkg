@@ -2702,7 +2702,7 @@ static struct spi_device *nrc_create_spi_device (void)
 		return NULL;
 	}
 
-	dev_info(&spi->dev, "SPI Device Created (bus_num:%d, cs_num: %hhn, irq_num:%d, max_speed:%d\n",
+	dev_info(&spi->dev, "SPI Device Created (bus_num:%d, cs_num: %hhd, irq_num:%d, max_speed:%d\n",
 			spi->master->bus_num,
 			spi->chip_select,
 			spi->irq,
