@@ -751,7 +751,7 @@ static ssize_t nrc_mac_twt_schedule_write(struct file *file, const char __user *
     return len;
 }
 
-static int nrc_mac_twt_dump_read (struct file *file, char __user *user_buf,
+static ssize_t nrc_mac_twt_dump_read (struct file *file, char __user *user_buf,
                  size_t count, loff_t *ppos)
 {
 	struct nrc *nw = file->private_data;
