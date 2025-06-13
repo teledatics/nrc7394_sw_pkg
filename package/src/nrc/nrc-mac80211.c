@@ -3833,7 +3833,7 @@ static u32 nrc_get_expected_throughput(struct ieee80211_sta *sta)
 		struct wim *wim = (struct wim *)skb_resp->data;
 		struct wim_tlv *tlv = (struct wim_tlv *)(wim + 1);
 		struct nrc_tx_stats* tx_stats = (struct nrc_tx_stats*) tlv->v;
-		nrc_common_dbg("mcs:%d bw:%d gi:%d", tx_stats->mcs, tx_stats->bw, tx_stats->gi);
+		// nrc_common_dbg("mcs:%d bw:%d gi:%d", tx_stats->mcs, tx_stats->bw, tx_stats->gi);
 		if (tx_stats->bw < 3 && tx_stats->mcs < 11) {
 			nrc_stats_update_tx_stats(tx_stats);
 		}
