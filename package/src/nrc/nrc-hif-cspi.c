@@ -22,7 +22,7 @@
 #include <linux/irqreturn.h>
 #include <linux/interrupt.h>
 #include <net/mac80211.h>
-#if KERNEL_VERSION(6, 12, 0) > LINUX_VERSION_CODE
+#if NRC_TARGET_KERNEL_VERSION >= KERNEL_VERSION(6,12,0)
 #include <linux/unaligned.h>
 #else
 #include <asm/unaligned.h>
