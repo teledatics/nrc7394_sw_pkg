@@ -24,6 +24,14 @@
 #include "nrc.h"
 #include "nrc-hif-cspi.h"
 
+#if KERNEL_VERSION(6, 10, 0) <= NRC_TARGET_KERNEL_VERSION
+/* Kernel now wants only one arg; transparently discard the second. */
+#ifdef __assign_str                /* defined by <trace/...>.h we pull in */
+#undef __assign_str
+#endif
+#define __assign_str(dst, ...) __assign_str(dst)
+#endif
+
 #if !defined(_NRC_TRACE_H_)
 
 static char *mgmt_str[] = {
