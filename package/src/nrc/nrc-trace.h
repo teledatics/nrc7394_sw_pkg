@@ -25,9 +25,9 @@
 #include "nrc-hif-cspi.h"
 
 #if KERNEL_VERSION(6, 10, 0) <= NRC_TARGET_KERNEL_VERSION
-#define __assign_str_two_arg_onearg(dst, src) __assign_str(dst)
+#define __assign_str_two_arg(dst, src) __assign_str(dst)
 #else
-#define __assign_str_two_arg_onearg __assign_str
+#define __assign_str_two_arg __assign_str
 #endif
 
 #if !defined(_NRC_TRACE_H_)
