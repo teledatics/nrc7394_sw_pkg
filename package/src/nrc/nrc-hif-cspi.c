@@ -1190,8 +1190,12 @@ static int spi_update_status(struct spi_device *spi)
 						nw->vif[nw->d_deauth.vif_index] = NULL;
 						nw->enable_vif[nw->d_deauth.vif_index] = false;
 						atomic_set(&nw->d_deauth.delayed_deauth, 0);
+#if KERNEL_VERSION(6,11,0) <= NRC_TARGET_KERNEL_VERSION
+						nrc_mac_stop(nw->hw, 0);
+#else
 						nrc_mac_stop(nw->hw);
-					}
+#endif
+				}
 					while (atomic_read(&nw->d_deauth.delayed_deauth)) {
 						atomic_set(&nw->d_deauth.delayed_deauth, 0);
 					}
