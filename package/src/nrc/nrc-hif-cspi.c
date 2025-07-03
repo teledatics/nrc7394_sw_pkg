@@ -2560,6 +2560,11 @@ static struct spi_board_info bi = {
 
 #include <linux/platform_device.h>
 
+#if KERNEL_VERSION(6, 9, 0) <= NRC_TARGET_KERNEL_VERSION
+#define spi_master                 spi_controller
+#define spi_master_put(_c)         spi_controller_put(_c)
+#endif
+
 static int __spi_controller_match(struct device *dev, const void *data)
 {
 	struct spi_controller *ctlr;
@@ -2632,7 +2637,7 @@ static struct spi_device *nrc_create_spi_device (void)
 		return NULL;
 	}
 
-	dev_info(&spi->dev, "SPI Device Created (bus_num:%d, cs_num:%d, irq_num:%d, max_speed:%d\n",
+	dev_info(&spi->dev, "SPI Device Created (bus_num:%d, cs_num: %hhn, irq_num:%d, max_speed:%d\n",
 			spi->master->bus_num,
 			spi->chip_select,
 			spi->irq,
