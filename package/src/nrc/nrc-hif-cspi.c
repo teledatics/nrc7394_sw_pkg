@@ -2565,6 +2565,12 @@ static struct spi_board_info bi = {
 #define spi_master_put(_c)         spi_controller_put(_c)
 #endif
 
+static inline struct spi_controller *nrc_spi_alloc_master(struct device *host,
+						      unsigned int size)
+{
+	return __spi_alloc_controller(host, size, false);
+}
+
 static int __spi_controller_match(struct device *dev, const void *data)
 {
 	struct spi_controller *ctlr;
@@ -2590,7 +2596,7 @@ static struct spi_controller *spi_busnum_to_master(u16 bus_num)
 	pdev->num_resources = 0;
 	platform_device_add(pdev);
 
-	master = spi_alloc_master(&pdev->dev, sizeof(void *));
+	master = nrc_spi_alloc_master(&pdev->dev, sizeof(void *));
 	if (!master) {
 		pr_err("Error: failed to allocate SPI master device\n");
 		platform_device_put(pdev);
