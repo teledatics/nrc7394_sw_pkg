@@ -2638,7 +2638,11 @@ static struct spi_device *nrc_create_spi_device (void)
 	}
 
 	dev_info(&spi->dev, "SPI Device Created (bus_num:%d, cs_num: %hhn, irq_num:%d, max_speed:%d\n",
+#if KERNEL_VERSION(6, 5, 0) > NRC_TARGET_KERNEL_VERSION
 			spi->master->bus_num,
+#else
+			spi->controller->bus_num,
+#endif
 			spi->chip_select,
 			spi->irq,
 			spi->max_speed_hz);
