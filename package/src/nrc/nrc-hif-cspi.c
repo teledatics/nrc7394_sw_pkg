@@ -18,6 +18,7 @@
 #include <linux/module.h>
 #include <linux/wait.h>
 #include <linux/spi/spi.h>
+#include <linux/err.h>
 #include <linux/gpio.h>
 #include <linux/irqreturn.h>
 #include <linux/interrupt.h>
@@ -2468,8 +2469,10 @@ try:
 	}
 
 	nw = nrc_nw_alloc(&spi->dev, hdev);
-	if (IS_ERR(nw)) {
+	
+	if (!nw || IS_ERR(nw)) {
 		dev_err(&spi->dev, "Failed to nrc_nw_alloc\n");
+		ret = nw ? PTR_ERR(nw) : -ENOMEM;
 		goto err_hif_free;
 	}
 

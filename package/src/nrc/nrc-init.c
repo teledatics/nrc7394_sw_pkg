@@ -19,6 +19,7 @@
 #include <linux/module.h>
 #include <linux/device.h>
 #include <linux/platform_device.h>
+#include <linux/err.h>
 #include <linux/gpio.h>
 #include "nrc.h"
 #include "nrc-init.h"
@@ -880,9 +881,10 @@ struct nrc *nrc_nw_alloc(struct device *dev, struct nrc_hif_device *hdev)
 
 	hw = nrc_mac_alloc_hw(sizeof(struct nrc), NRC_DRIVER_NAME);
 
-	if (!hw) {
-			return NULL;
-	}
+	if (IS_ERR(hw))
+		return ERR_CAST(hw);
+	if (!hw)
+		return NULL;
 
 	nw = hw->priv;
 	nw->hw = hw;

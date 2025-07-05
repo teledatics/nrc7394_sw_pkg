@@ -186,8 +186,8 @@
 #define ieee80211_hw_check(hw, flg) (hw->flags & IEEE80211_HW_##flg)
 #endif
 
-#if defined(CONFIG_WIRELESS_WDS) || defined(CONFIG_USE_CHANNEL_CONTEXT)
-/* Cannot use CONFIG_USE_CHANNEL_CONTEXT) */
+#if defined(CONFIG_WIRELESS_WDS) && defined(CONFIG_USE_CHANNEL_CONTEXT)
+/* Cannot use CONFIG_USE_CHANNEL_CONTEXT with CONFIG_WIRELESS_WDS */
 #undef CONFIG_USE_CHANNEL_CONTEXT
 #endif
 
@@ -207,9 +207,9 @@
    spi_busnum_to_master fuction which is used to call spi_new_device
    has been deleted since 5.16 kernel version */
 
-#if KERNEL_VERSION(5, 16, 0) <= NRC_TARGET_KERNEL_VERSION
-#define CONFIG_SPI_USE_DT
-#endif
+// #if KERNEL_VERSION(5, 16, 0) <= NRC_TARGET_KERNEL_VERSION
+// #define CONFIG_SPI_USE_DT
+// #endif
 
 /* For kernels 5.16 and above, the removed 'spi_busnum_to_master' function
    is implemented as a static in this driver.

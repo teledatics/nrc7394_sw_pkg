@@ -3635,12 +3635,23 @@ static void nrc_mac_change_chanctx(struct ieee80211_hw *hw,
 			ctx->def.center_freq1, ctx->def.center_freq2);
 }
 
+
+#if KERNEL_VERSION(6, 8, 0) <= NRC_TARGET_KERNEL_VERSION
+static int nrc_mac_assign_vif_chanctx(struct ieee80211_hw *hw,
+               struct ieee80211_vif *vif,
+               struct ieee80211_bss_conf *link_conf,
+               struct ieee80211_chanctx_conf *ctx)
+#else
 static int nrc_mac_assign_vif_chanctx(struct ieee80211_hw *hw,
 		struct ieee80211_vif *vif,
 		struct ieee80211_chanctx_conf *ctx)
+#endif
 {
 	struct nrc *nw = hw->priv;
 	struct sk_buff *skb;
+#if KERNEL_VERSION(6, 8, 0) <= NRC_TARGET_KERNEL_VERSION
+       (void)link_conf;
+#endif
 
 	nrc_mac_dbg("%s, vif[type:%d, addr:%pM] %d MHz/width: %d/cfreqs:%d/%d MHz\n",
 			__func__, vif->type, vif->addr,
@@ -3667,9 +3678,16 @@ static int nrc_mac_assign_vif_chanctx(struct ieee80211_hw *hw,
 	return 0;
 }
 
+#if KERNEL_VERSION(6, 8, 0) <= NRC_TARGET_KERNEL_VERSION
+static void nrc_mac_unassign_vif_chanctx(struct ieee80211_hw *hw,
+               struct ieee80211_vif *vif,
+               struct ieee80211_bss_conf *link_conf,
+               struct ieee80211_chanctx_conf *ctx)
+#else
 static void nrc_mac_unassign_vif_chanctx(struct ieee80211_hw *hw,
 		struct ieee80211_vif *vif,
 		struct ieee80211_chanctx_conf *ctx)
+#endif
 {
 	nrc_mac_dbg("%s, vif[type:%d, addr:%pM] %d MHz/width: %d/cfreqs:%d/%d MHz\n",
 			__func__, vif->type, vif->addr,
