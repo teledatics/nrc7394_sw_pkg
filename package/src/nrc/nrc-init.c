@@ -920,9 +920,11 @@ struct nrc *nrc_nw_alloc(struct device *dev, struct nrc_hif_device *hdev)
 		goto err_hw_free;
 	}
 
-	nw->workqueue = create_singlethread_workqueue("nrc_wq");
-	nw->ps_wq = create_singlethread_workqueue("nrc_ps_wq");
-	nw->restart_workqueue = create_singlethread_workqueue("nrc_restart");
+       nw->workqueue = create_singlethread_workqueue("nrc_wq");
+       nw->ps_wq = create_singlethread_workqueue("nrc_ps_wq");
+       nw->restart_workqueue = create_singlethread_workqueue("nrc_restart");
+       if (!nw->workqueue || !nw->ps_wq || !nw->restart_workqueue)
+               goto err_wq;
 
 	INIT_DELAYED_WORK(&nw->roc_finish, nrc_mac_roc_finish);
 	INIT_DELAYED_WORK(&nw->rm_vendor_ie_wowlan_pattern, nrc_rm_vendor_ie_wowlan_pattern);
@@ -964,7 +966,16 @@ struct nrc *nrc_nw_alloc(struct device *dev, struct nrc_hif_device *hdev)
 	}
 
 	return nw;
-
+	
+err_wq:
+       if (nw->restart_workqueue)
+               destroy_workqueue(nw->restart_workqueue);
+       if (nw->ps_wq)
+               destroy_workqueue(nw->ps_wq);
+       if (nw->workqueue)
+               destroy_workqueue(nw->workqueue);
+       nrc_wim_response_deinit(nw);
+       
 err_hw_free:
 	nrc_mac_free_hw(hw);
 
