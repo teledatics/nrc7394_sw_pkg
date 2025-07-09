@@ -2470,9 +2470,9 @@ try:
 
 	nw = nrc_nw_alloc(&spi->dev, hdev);
 	
-	if (!nw || IS_ERR(nw)) {
+	if (!nw) {
 		dev_err(&spi->dev, "Failed to nrc_nw_alloc\n");
-		ret = nw ? PTR_ERR(nw) : -ENOMEM;
+		ret = -ENOMEM;
 		goto err_hif_free;
 	}
 
@@ -2646,13 +2646,9 @@ static struct spi_device *nrc_create_spi_device (void)
 		return NULL;
 	}
 
-	dev_info(&spi->dev, "SPI Device Created (bus_num:%d, cs_num: %hhn, irq_num:%d, max_speed:%d\n",
-#if KERNEL_VERSION(6, 5, 0) > NRC_TARGET_KERNEL_VERSION
-			spi->master->bus_num,
-#else
-			spi->controller->bus_num,
-#endif
-			spi->chip_select,
+	dev_info(&spi->dev, "SPI Device Created (bus_num:%d, cs_num: %d, irq_num:%d, max_speed:%d\n",
+			spi_bus_num,
+			spi_cs_num,
 			spi->irq,
 			spi->max_speed_hz);
 	return spi;

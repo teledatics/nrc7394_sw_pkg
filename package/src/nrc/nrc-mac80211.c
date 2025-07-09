@@ -1794,14 +1794,20 @@ static int nrc_mac_config(struct ieee80211_hw *hw, u32 changed)
 #endif /* defined(CONFIG_SUPPORT_BD) */
 #ifdef CONFIG_SUPPORT_CHANNEL_INFO
 	struct cfg80211_chan_def chandef = {0,};
-	memcpy(&chandef, &hw->conf.chandef, sizeof(struct cfg80211_chan_def));
-	memcpy(&ch, hw->conf.chandef.chan, sizeof(struct ieee80211_channel));
-	chandef.chan = &ch;
+	if(hw)
+		memcpy(&chandef, &hw->conf.chandef, sizeof(struct cfg80211_chan_def));
+	if(hw && hw->conf.chandef.chan){
+		memcpy(&ch, hw->conf.chandef.chan, sizeof(struct ieee80211_channel));
+		chandef.chan = &ch;
+	}
 #else
 	struct ieee80211_conf chandef = {0,};
-	memcpy(&chandef, &hw->conf, sizeof(struct ieee80211_conf));
-	memcpy(&ch, hw->conf.channel, sizeof(struct ieee80211_channel));
-	chandef.channel = &ch;
+	if(hw)
+		memcpy(&chandef, &hw->conf, sizeof(struct ieee80211_conf));
+	if(hw && hw->conf.channel){
+		memcpy(&ch, hw->conf.channel, sizeof(struct ieee80211_channel));
+		chandef.channel = &ch;
+	}
 #endif
 
 	nrc_mac_dbg("%s: changed: 0x%x\n", __FUNCTION__, changed);
