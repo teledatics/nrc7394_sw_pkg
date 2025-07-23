@@ -47,7 +47,7 @@
 
 static int tx_h_sta_pm(struct nrc_trx_data *tx)
 {
-#ifdef CONFIG_SUPPORT_AFTER_KERNEL_3_0_36
+#if defined(CONFIG_SUPPORT_AFTER_KERNEL_3_0_36) && defined(CONFIG_SUPPORT_PS)
 	struct ieee80211_hw *hw = tx->nw->hw;
 #endif
 	struct sk_buff *skb = tx->skb;

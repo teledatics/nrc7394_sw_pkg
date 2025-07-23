@@ -242,8 +242,12 @@ static int _c_spi_read_regs(struct spi_device *spi,
 	}
 
 #ifndef CONFIG_SPI_HALF_DUPLEX
-	if (WARN_ON_ONCE(rx[7] != C_SPI_ACK)) {
-		nrc_common_dbg("[%s] try to read register but SPI ACK is invalid\n", __func__);
+	// if (WARN_ON_ONCE(rx[7] != C_SPI_ACK)) {
+	// 	nrc_common_dbg("[%s] try to read register but SPI ACK is invalid\n", __func__);
+	// 	return -EIO;
+	// }
+	if (unlikely(rx[7] != C_SPI_ACK)) {
+		nrc_common_dbg("[%s] invalid SPI ACK: 0x%02x\n", __func__, rx[7]);
 		return -EIO;
 	}
 #endif
@@ -387,9 +391,8 @@ static ssize_t _c_spi_write(struct spi_device *spi, u8 *buf, ssize_t size)
 	}
 
 #ifndef CONFIG_SPI_HALF_DUPLEX
-	if (WARN_ON_ONCE(rx[7] != C_SPI_ACK))
-	{
-		// nrc_common_dbg("[%s] try to read register but SPI ACK is invalid\n", __func__);
+	if (unlikely(rx[7] != C_SPI_ACK)) {
+		nrc_common_dbg("[%s] SPI write failed: invalid ACK 0x%02x\n", __func__, rx[7]);
 		return -EIO;
 	}
 #endif

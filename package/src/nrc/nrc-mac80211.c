@@ -1402,7 +1402,8 @@ static void nrc_mac_remove_interface(struct ieee80211_hw *hw,
 	int ret;
 
 	/* cancel async throughput update */
-	cancel_delayed_work_sync(&nw->tp_refresh_work);
+	if (nw->tp_refresh_work.work.func)
+		cancel_delayed_work_sync(&nw->tp_refresh_work);
 	
 	if (vif->type == NL80211_IFTYPE_MONITOR || vif->p2p){
 		if(vif->type == NL80211_IFTYPE_MONITOR){
@@ -1440,8 +1441,15 @@ static void nrc_mac_remove_interface(struct ieee80211_hw *hw,
 		(vif->type == NL80211_IFTYPE_STATION)) {
 		nrc_vcmd_backup_del_all_entry(i_vif->index);
 
-		if ((vif->type == NL80211_IFTYPE_STATION) && (i_vif->index < VIF_MAX))
-			cancel_delayed_work_sync(&nrc_vcmd_backup_get_info_addr(i_vif->index)->vcmd_backup_reinstall);
+		// if ((vif->type == NL80211_IFTYPE_STATION) && (i_vif->index < VIF_MAX))
+		// 	cancel_delayed_work_sync(&nrc_vcmd_backup_get_info_addr(i_vif->index)->vcmd_backup_reinstall);
+	
+		if ((vif->type == NL80211_IFTYPE_STATION) && (i_vif->index < VIF_MAX)) {
+			VCMD_BACKUP_INFO *info = nrc_vcmd_backup_get_info_addr(i_vif->index);
+			if (info && info->vcmd_backup_reinstall.work.func)
+				cancel_delayed_work_sync(&info->vcmd_backup_reinstall);
+}
+
 	}
 
 #ifdef CONFIG_USE_TXQ
@@ -1931,7 +1939,7 @@ static int nrc_mac_config(struct ieee80211_hw *hw, u32 changed)
 			} else {
 				return ret;
 			}
-		} else if (ieee80211_hw_check(hw, SUPPORTS_PS)) {
+		} else if (0 && ieee80211_hw_check(hw, SUPPORTS_PS)) {
 			if (!nw->ps_enabled) {
 				if (power_save >= NRC_PS_DEEPSLEEP_TIM)
 					return ret;
@@ -3484,7 +3492,9 @@ static void nrc_mac_channel_policy(void *data, u8 *mac,
 	struct wireless_dev *wdev = i_vif->dev->ieee80211_ptr;
 #endif
 
-	if (!wdev)
+	WARN_ON(!data)
+	
+	if (!wdev || !data)
 		return;
 
 #ifdef CONFIG_SUPPORT_CHANNEL_INFO

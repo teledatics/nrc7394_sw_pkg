@@ -31,8 +31,7 @@ $(M_SRC)-objs = \
 ccflags-y := \
 	-I$(src) \
 	-DDEBUG \
-	-DCONFIG_NRC_HIF_CSPI \
-	-DENABLE_DYNAMIC_PS
+	-DCONFIG_NRC_HIF_CSPI
 
 ldflags-y += -T$(M)/nrc.lds
 
