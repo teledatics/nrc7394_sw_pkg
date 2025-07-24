@@ -3652,7 +3652,7 @@ static void nrc_mac_change_chanctx(struct ieee80211_hw *hw,
 }
 
 
-#if KERNEL_VERSION(6, 2, 0) <= NRC_TARGET_KERNEL_VERSION
+#if KERNEL_VERSION(5, 19, 0) <= NRC_TARGET_KERNEL_VERSION
 static int nrc_mac_assign_vif_chanctx(struct ieee80211_hw *hw,
                struct ieee80211_vif *vif,
                struct ieee80211_bss_conf *link_conf,
@@ -3665,7 +3665,7 @@ static int nrc_mac_assign_vif_chanctx(struct ieee80211_hw *hw,
 {
 	struct nrc *nw = hw->priv;
 	struct sk_buff *skb;
-#if KERNEL_VERSION(6, 2, 0) <= NRC_TARGET_KERNEL_VERSION
+#if KERNEL_VERSION(5, 19, 0) <= NRC_TARGET_KERNEL_VERSION
        (void)link_conf;
 #endif
 
@@ -3694,7 +3694,7 @@ static int nrc_mac_assign_vif_chanctx(struct ieee80211_hw *hw,
 	return 0;
 }
 
-#if KERNEL_VERSION(6, 8, 0) <= NRC_TARGET_KERNEL_VERSION
+#if KERNEL_VERSION(5, 19, 0) <= NRC_TARGET_KERNEL_VERSION
 static void nrc_mac_unassign_vif_chanctx(struct ieee80211_hw *hw,
                struct ieee80211_vif *vif,
                struct ieee80211_bss_conf *link_conf,
