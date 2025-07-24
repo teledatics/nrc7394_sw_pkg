@@ -3492,7 +3492,7 @@ static void nrc_mac_channel_policy(void *data, u8 *mac,
 	struct wireless_dev *wdev = i_vif->dev->ieee80211_ptr;
 #endif
 
-	WARN_ON(!data)
+	WARN_ON(!data);
 	
 	if (!wdev || !data)
 		return;
