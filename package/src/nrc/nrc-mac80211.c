@@ -3500,15 +3500,25 @@ static void nrc_mac_channel_policy(void *data, u8 *mac,
 #ifdef CONFIG_SUPPORT_CHANNEL_INFO
 #ifdef CONFIG_USE_LINK_ID
 	chandef = wdev_chandef(wdev, vif->bss_conf.link_id);
+	
+	if (!chan_to_follow->chan || !chandef->chan)
+		return;
+	
 	if (chandef->chan &&
 		chandef->chan->center_freq ==
 		chan_to_follow->chan->center_freq)
 #else
+	if (!chan_to_follow->chan || !wdev->chandef.chan)
+		return;
+	
 	if (wdev->chandef.chan &&
 		wdev->chandef.chan->center_freq ==
 		chan_to_follow->chan->center_freq)
 #endif /* ifdef CONFIG_USE_LINK_ID */
 #else
+	if (!chan_to_follow->channel || !wdev->channel)
+		return;
+	
 	if (wdev->channel &&
 		wdev->channel->center_freq ==
 		chan_to_follow->channel->center_freq)
