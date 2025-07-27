@@ -242,10 +242,6 @@ static int _c_spi_read_regs(struct spi_device *spi,
 	}
 
 #ifndef CONFIG_SPI_HALF_DUPLEX
-	// if (WARN_ON_ONCE(rx[7] != C_SPI_ACK)) {
-	// 	nrc_common_dbg("[%s] try to read register but SPI ACK is invalid\n", __func__);
-	// 	return -EIO;
-	// }
 	if (unlikely(rx[7] != C_SPI_ACK)) {
 		nrc_common_dbg("[%s] invalid SPI ACK: 0x%02x\n", __func__, rx[7]);
 		return -EIO;
@@ -362,9 +358,6 @@ static ssize_t _c_spi_write(struct spi_device *spi, u8 *buf, ssize_t size)
 	ssize_t status;
 
 	if (size == 0 || buf == NULL)
-		return -EINVAL;
-	
-	if (unlikely(size > WIM_MAX_SIZE))
 		return -EINVAL;
 	
 	cmd = C_SPI_WRITE | C_SPI_BURST | C_SPI_FIXED;
@@ -1034,13 +1027,13 @@ static int spi_update_status(struct spi_device *spi)
 		request.initiator = NL80211_REGDOM_SET_BY_DRIVER;
 #endif
 
-		if (ieee80211_hw_check(nw->hw, SUPPORTS_DYNAMIC_PS) &&
-			nw->drv_state >= NRC_DRV_RUNNING &&
-			!(nw->twt_sched && twt_force_sleep) &&
-			nw->hw->conf.dynamic_ps_timeout > 0) {
-			mod_timer(&nw->dynamic_ps_timer,
-				jiffies + msecs_to_jiffies(nw->hw->conf.dynamic_ps_timeout));
-		}
+		// if (ieee80211_hw_check(nw->hw, SUPPORTS_DYNAMIC_PS) &&
+		// 	nw->drv_state >= NRC_DRV_RUNNING &&
+		// 	!(nw->twt_sched && twt_force_sleep) &&
+		// 	nw->hw->conf.dynamic_ps_timeout > 0) {
+		// 	mod_timer(&nw->dynamic_ps_timer,
+		// 		jiffies + msecs_to_jiffies(nw->hw->conf.dynamic_ps_timeout));
+		// }
 
 		/* Handling Status events */
 		switch (status->msg[3] & 0xffff) {
@@ -1126,12 +1119,12 @@ static int spi_update_status(struct spi_device *spi)
 #endif /* #ifdef CONFIG_S1G_CHANNEL */
 				//nrc_hif_wake_target_done(hdev);
 				if (ieee80211_hw_check(nw->hw, SUPPORTS_DYNAMIC_PS)) {
-					if (nw->drv_state >= NRC_DRV_RUNNING &&
-						!(nw->twt_sched && twt_force_sleep) &&
-						nw->hw->conf.dynamic_ps_timeout > 0) {
-						mod_timer(&nw->dynamic_ps_timer,
-							jiffies + msecs_to_jiffies(nw->hw->conf.dynamic_ps_timeout));
-					}
+					// if (nw->drv_state >= NRC_DRV_RUNNING &&
+					// 	!(nw->twt_sched && twt_force_sleep) &&
+					// 	nw->hw->conf.dynamic_ps_timeout > 0) {
+					// 	mod_timer(&nw->dynamic_ps_timer,
+					// 		jiffies + msecs_to_jiffies(nw->hw->conf.dynamic_ps_timeout));
+					// }
 				} else if (ieee80211_hw_check(nw->hw, SUPPORTS_PS)) {
 				} else {
 					if (power_save >= NRC_PS_DEEPSLEEP_NONTIM) {
@@ -1226,13 +1219,13 @@ static int spi_update_status(struct spi_device *spi)
 
 			case TARGET_NOTI_TWT_SERVICE:
 				nrc_dbg(NRC_DBG_STATE, "TARGET_NOTI_TWT_SERVICE");
-				if (ieee80211_hw_check(nw->hw, SUPPORTS_DYNAMIC_PS) &&
-					nw->drv_state >= NRC_DRV_RUNNING &&
-					nw->twt_sched && twt_force_sleep) {
-					nw->hw->conf.dynamic_ps_timeout = (int)(div_u64(nw->twt_sched->sp, USEC_PER_MSEC));
-					mod_timer(&nw->dynamic_ps_timer,
-						jiffies + msecs_to_jiffies(nw->hw->conf.dynamic_ps_timeout));
-				}
+				// if (ieee80211_hw_check(nw->hw, SUPPORTS_DYNAMIC_PS) &&
+				// 	nw->drv_state >= NRC_DRV_RUNNING &&
+				// 	nw->twt_sched && twt_force_sleep) {
+				// 	nw->hw->conf.dynamic_ps_timeout = (int)(div_u64(nw->twt_sched->sp, USEC_PER_MSEC));
+				// 	mod_timer(&nw->dynamic_ps_timer,
+				// 		jiffies + msecs_to_jiffies(nw->hw->conf.dynamic_ps_timeout));
+				// }
 				twt_service = true;
 				sysfs_notify(&mod->mkobj.kobj, NULL, "twt_service");
 				break;
