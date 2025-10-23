@@ -180,7 +180,7 @@ int nrc_wim_change_sta(struct nrc *nw, struct ieee80211_vif *vif,
 				    tlv_len(sizeof(*p)));
 
 	p = nrc_wim_skb_add_tlv(skb, WIM_TLV_STA_PARAM, sizeof(*p), NULL);
-	memset(p, 0, sizeof(*p));
+	memset(&p->param, 0, sizeof(*p));
 
 	p->cmd = cmd;
 	p->flags = 0;
@@ -222,7 +222,7 @@ int nrc_wim_hw_scan(struct nrc *nw, struct ieee80211_vif *vif,
 
 	/* WIM_TL_SCAN_PARAM */
 	p = nrc_wim_skb_add_tlv(skb, WIM_TLV_SCAN_PARAM, sizeof(*p), NULL);
-	memset(p, 0, sizeof(*p));
+	memset(&p->param, 0, sizeof(*p));
 
 	if (WARN_ON(req->n_channels > WIM_MAX_SCAN_CHANNEL))
 		req->n_channels = WIM_MAX_SCAN_CHANNEL;
@@ -407,7 +407,7 @@ int nrc_wim_install_key(struct nrc *nw, enum set_key_cmd cmd,
 
 	p = nrc_wim_skb_add_tlv(skb, WIM_TLV_KEY_PARAM, sizeof(*p), NULL);
 
-	memset(p, 0, sizeof(*p));
+	memset(&p->param, 0, sizeof(*p));
 
 	if (sta) {
 		addr = sta->addr;
@@ -922,7 +922,7 @@ static int nrc_wim_event_handler(struct nrc *nw,
 		nrc_wim_handle_req_deauth(nw);
 		break;
 	case WIM_EVENT_CSA:
-		ieee80211_csa_finish(vif);
+		ieee80211_csa_finish(vif, 0);
 		break;
 	case WIM_EVENT_CH_SWITCH:
 #if KERNEL_VERSION(6, 7, 0) <= NRC_TARGET_KERNEL_VERSION
@@ -1004,7 +1004,7 @@ int nrc_wim_set_ps (struct nrc *nw, enum NRC_PS_MODE mode, int timeout)
 	skb = nrc_wim_alloc_skb(nw, WIM_CMD_SET, tlv_len(sizeof(struct wim_pm_param)));
 
 	p = nrc_wim_skb_add_tlv(skb, WIM_TLV_PS_ENABLE, sizeof(struct wim_pm_param), NULL);
-	memset(p, 0, sizeof(struct wim_pm_param));
+	memset(&p->param, 0, sizeof(struct wim_pm_param));
 
 	p->ps_mode = mode;
 	p->ps_enable = 1;

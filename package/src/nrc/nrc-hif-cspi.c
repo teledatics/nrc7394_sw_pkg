@@ -22,7 +22,7 @@
 #include <linux/irqreturn.h>
 #include <linux/interrupt.h>
 #include <net/mac80211.h>
-#include <asm/unaligned.h>
+#include <linux/unaligned.h>
 #include <linux/smp.h>
 #ifdef CONFIG_SUPPORT_AFTER_KERNEL_3_0_36
 #include <linux/timekeeping.h>
@@ -1237,7 +1237,7 @@ static int spi_update_status(struct spi_device *spi)
 						nw->vif[nw->d_deauth.vif_index] = NULL;
 						nw->enable_vif[nw->d_deauth.vif_index] = false;
 						atomic_set(&nw->d_deauth.delayed_deauth, 0);
-						nrc_mac_stop(nw->hw);
+						nrc_mac_stop(nw->hw, 0);
 					}
 					while (atomic_read(&nw->d_deauth.delayed_deauth)) {
 						atomic_set(&nw->d_deauth.delayed_deauth, 0);

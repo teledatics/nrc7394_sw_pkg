@@ -52,11 +52,11 @@ struct ftdi_spi {
 
 static int ftdi_spi_setup (struct spi_device *spi)
 {
-	struct spi_master *master = spi->master;
+	struct spi_controller *master = spi->controller;
 	struct ftdi_spi *priv = spi_controller_get_devdata(master);
 	int ret;
 
-	if (spi->chip_select != 0 || spi->bits_per_word != 8)
+	if (spi->chip_select[0] != 0 || spi->bits_per_word != 8)
 		return -EINVAL;
 
 	if (spi->max_speed_hz < master->min_speed_hz ||
@@ -74,11 +74,11 @@ static int ftdi_spi_setup (struct spi_device *spi)
 
 static void ftdi_spi_set_cs(struct spi_device *spi, bool enable)
 {
-	struct ftdi_spi *priv = spi_controller_get_devdata(spi->master);
+	struct ftdi_spi *priv = spi_controller_get_devdata(spi->controller);
 	int ret;
 
-	dev_dbg(&priv->pdev->dev, "%s: CS %u, cs mode %d, val %d\n",
-			__func__, spi->chip_select, (spi->mode & SPI_CS_HIGH), enable);
+	dev_dbg(&priv->pdev->dev, "%s: CS %u, cs mode %lu, val %u\n",
+			__func__, spi->chip_select[0], (spi->mode & SPI_CS_HIGH), enable);
 
 	ret = priv->iops->set_cs_pin(priv->intf, enable ? MPSSE_GPIO_HIGH : MPSSE_GPIO_LOW);
 	if (ret < 0)
@@ -464,7 +464,7 @@ static int ftdi_spi_probe(struct platform_device *pdev)
 			!pd->ops->cfg_bus_pins || !pd->ops->set_cs_pin)
 		return -EINVAL;
 
-	master = spi_alloc_master(&pdev->dev, sizeof(*priv));
+	master = spi_alloc_host(&pdev->dev, sizeof(*priv));
 	if (!master)
 		return -ENOMEM;
 
@@ -549,7 +549,7 @@ static int ftdi_spi_slave_release(struct device *dev, void *data)
 {
 	struct spi_device *spi = to_spi_device(dev);
 
-	dev_dbg(dev, "%s: remove CS %u\n", __func__, spi->chip_select);
+	dev_dbg(dev, "%s: remove CS %u\n", __func__, spi->chip_select[0]);
 	spi_unregister_device(spi);
 
 	return 0;
