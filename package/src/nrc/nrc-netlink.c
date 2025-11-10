@@ -1325,13 +1325,19 @@ static int nrc_shell_run(struct sk_buff *skb, struct genl_info *info)
 	}
 	set_shell_run_state(NRC_SHELL_RUNNING);
 
-	if (!cmd)
+	if (!cmd){
+		nlmsg_free(msg);
+		set_shell_run_state(NRC_SHELL_IDLE);
 		return -EINVAL;
+	}
 
 	wim_skb = nrc_wim_alloc_skb(nrc_nw, WIM_CMD_SHELL, WIM_MAX_SIZE);
 
-	if (!wim_skb)
+	if (!wim_skb){
+		nlmsg_free(msg);
+		set_shell_run_state(NRC_SHELL_IDLE);
 		return -EINVAL;
+	}
 
 	nrc_wim_skb_add_tlv(wim_skb, WIM_TLV_SHELL_CMD, strlen(cmd)+1, cmd);
 
@@ -1343,9 +1349,10 @@ static int nrc_shell_run(struct sk_buff *skb, struct genl_info *info)
 
 		if (wim->cmd == WIM_CMD_SHELL) {
 			struct wim_tlv *tlv = (struct wim_tlv *)(wim + 1);
+			int tlv_len = min_t(int, tlv->l, sizeof(cmd_resp) - 1);
 
-			memcpy(cmd_resp, &tlv->v, tlv->l);
-			cmd_resp[tlv->l] = 0;
+			memcpy(cmd_resp, &tlv->v, tlv_len);
+			cmd_resp[tlv_len] = 0;
 			nrc_dbg(NRC_DBG_CAPI, "%s[%s]", __func__,
 					cmd_resp);
 		}
@@ -1397,12 +1404,18 @@ static int nrc_shell_run_raw(struct sk_buff *skb, struct genl_info *info)
 		return genlmsg_reply(msg, info);
 	}
 	set_shell_run_state(NRC_SHELL_RUNNING);
-	if (!cmd)
+	if (!cmd){
+		nlmsg_free(msg);
+		set_shell_run_state(NRC_SHELL_IDLE);
 		return -EINVAL;
+	}
 
 	wim_skb = nrc_wim_alloc_skb(nrc_nw, WIM_CMD_SHELL_RAW, WIM_MAX_SIZE);
-	if (!wim_skb)
+	if (!wim_skb){
+		nlmsg_free(msg);
+		set_shell_run_state(NRC_SHELL_IDLE);
 		return -EINVAL;
+	}
 
 	nrc_wim_skb_add_tlv(wim_skb, WIM_TLV_SHELL_CMD, strlen(cmd)+1, cmd);
 	wim_resp = nrc_xmit_wim_request_wait(nrc_nw, wim_skb,
@@ -1500,7 +1513,7 @@ static int cli_app_get_info(struct sk_buff *skb, struct genl_info *info)
 }
 
 
-static int cmd_to_argc_argv(const char* str, int* argc, char*** argv) {
+static int cmd_to_argc_argv(const char* str, int* argc, char*** argv, char** buf) {
 	int i, j, len, n;
 	char** res, * p;
 
@@ -1527,6 +1540,8 @@ static int cmd_to_argc_argv(const char* str, int* argc, char*** argv) {
 		kfree(res);
 		return -1;
 	}
+
+	*buf = p;
 	strcpy(p, str);
 	for (i = j = 0; i < len; ) {
 		while (i < len && p[i] == ' ')
@@ -1553,7 +1568,7 @@ static int cli_app_driver_cmd(struct sk_buff *skb, struct genl_info *info)
 	struct sk_buff *msg;
 	void *hdr;
 	int argc;
-	char** argv;
+	char **argv=NULL, *buf=NULL;
 
 	memset(cmd_resp, 0x0, sizeof(cmd_resp));
 
@@ -1579,14 +1594,26 @@ static int cli_app_driver_cmd(struct sk_buff *skb, struct genl_info *info)
 	if (info->attrs[NL_CLI_APP_DRIVER_CMD])
 		cmd = nla_data(info->attrs[NL_CLI_APP_DRIVER_CMD]);
 
-	if (!cmd)
+	if (!cmd){
+		nlmsg_free(msg);
 		return -EINVAL;
+	}
 
 	nrc_dbg(NRC_DBG_CAPI, "%s %s", __func__, cmd);
 
-	if (cmd_to_argc_argv(cmd, &argc, &argv) == -1) {
+	if (cmd_to_argc_argv(cmd, &argc, &argv, &buf) == -1) {
 		nrc_dbg(NRC_DBG_CAPI, "Failed to convert string to argc and argv");
+		nlmsg_free(msg);
 		return -EBUSY;
+	}
+
+	if(argc <= 0){
+		nlmsg_free(msg);
+		if(buf)
+			kfree(buf);
+		if(argv)
+			kfree(argv);
+		return -EINVAL;
 	}
 
 	if(strcmp(argv[0], "set") == 0){
@@ -1624,8 +1651,11 @@ static int cli_app_driver_cmd(struct sk_buff *skb, struct genl_info *info)
 	} else {
 		sprintf(cmd_resp, "fail");
 	}
-	kfree(argv[0]);
-	kfree(argv);
+		
+	if(buf)
+		kfree(buf);
+	if(argv)
+		kfree(argv);
 
 	nla_put_string(msg, NL_CLI_APP_DRIVER_CMD_RESP, cmd_resp);
 	genlmsg_end(msg, hdr);
@@ -1636,8 +1666,8 @@ static int cli_app_driver_cmd(struct sk_buff *skb, struct genl_info *info)
 static int nrc_mic_scan(struct sk_buff *skb, struct genl_info *info)
 {
 	struct sk_buff *msg, *wim_skb, *wim_resp;
-	struct wim_channel_1m_param channel;
-	struct wim_channel_1m_param resp;
+	struct wim_channel_1m_param channel = {0};
+	struct wim_channel_1m_param resp = {0};
 	void *hdr;
 	int count = 0;
 
@@ -1686,14 +1716,17 @@ static int nrc_inject_frame(struct sk_buff *skb, struct genl_info *info)
 	uint8_t *frame;
 	int length = nla_len(info->attrs[NL_FRAME_INJECTION_BUFFER]);
 
-	buffer = dev_alloc_skb(nrc_nw->hw->extra_tx_headroom + length);
+	if(length <= 0)
+		return -EINVAL;
+
+	buffer = dev_alloc_skb(nrc_nw->hw->extra_tx_headroom + length + 1);
+	if(!buffer)
+		return -ENOMEM;
+
 	skb_reserve(buffer, nrc_nw->hw->extra_tx_headroom);
-	frame = skb_put(buffer, length - 1);
-#if KERNEL_VERSION(5, 11, 0) <= NRC_TARGET_KERNEL_VERSION
-	nla_strscpy(frame, info->attrs[NL_FRAME_INJECTION_BUFFER], length);
-#else
-	nla_strlcpy(frame, info->attrs[NL_FRAME_INJECTION_BUFFER], length);
-#endif
+	frame = skb_put(buffer, length);
+
+	nla_memcpy(frame, info->attrs[NL_FRAME_INJECTION_BUFFER], length);
 
 	nrc_xmit_injected_frame(nrc_nw, NULL, NULL, buffer);
 
@@ -1705,16 +1738,17 @@ static int nrc_set_ie(struct sk_buff *skb, struct genl_info *info)
 	struct sk_buff *wim_skb;
 	struct wim_set_ie_param ie;
 
+	memset(&ie, 0, sizeof(ie));
+
 	ie.eid = nla_get_u16(info->attrs[NL_SET_IE_EID]);
 	ie.length = nla_get_u8(info->attrs[NL_SET_IE_LENGTH]);
 
-#if KERNEL_VERSION(5, 11, 0) <= NRC_TARGET_KERNEL_VERSION
-	nla_strscpy(ie.data, info->attrs[NL_SET_IE_DATA],
-		nla_len(info->attrs[NL_SET_IE_DATA]));
-#else
-	nla_strlcpy(ie.data, info->attrs[NL_SET_IE_DATA],
-		nla_len(info->attrs[NL_SET_IE_DATA]));
-#endif
+	if(ie.length <= 0 || ie.length > INFO_ELEMENT_MAX_LENGTH)
+		return -EINVAL;
+
+	nla_memcpy(ie.data, info->attrs[NL_SET_IE_DATA],
+		min_t(int, ie.length, INFO_ELEMENT_MAX_LENGTH));
+
 	wim_skb = nrc_wim_alloc_skb(nrc_nw, WIM_CMD_SET_IE,
 		sizeof(struct wim_set_ie_param));
 
@@ -1730,47 +1764,24 @@ static int nrc_set_ie(struct sk_buff *skb, struct genl_info *info)
 
 static int nrc_set_sae(struct sk_buff *skb, struct genl_info *info)
 {
-	// 10/27/2020 Shinwoo Lee
-	// Annotated debug messages out, but left them for future debugging
-
 	struct sk_buff *wim_skb;
 	struct wim_set_sae_param sae;
-	int i;
-	// nrc_dbg(NRC_DBG_WIM, "nrc-netlink driver Log (before copying eid)\n");
+
+	memset(&sae, 0, sizeof(sae));
+
 	sae.eid = nla_get_u16(info->attrs[NL_SET_SAE_EID]);
-	// nrc_dbg(NRC_DBG_WIM, "nrc-netlink driver Log (before copying length)\n");
 	sae.length = nla_get_u16(info->attrs[NL_SET_SAE_LENGTH]);
 
-	for (i=0; i< sae.length; i++) {
-		if (i==0) nrc_dbg(NRC_DBG_WIM, "Data: %x", *(info->attrs[NL_SET_SAE_DATA]));
-		else nrc_dbg(NRC_DBG_WIM, "%x", *(info->attrs[NL_SET_SAE_DATA]+i));
-	}
-	// nrc_dbg(NRC_DBG_WIM, "nrc-netlink driver Log (before copying data)\n");
-#if KERNEL_VERSION(5, 11, 0) <= NRC_TARGET_KERNEL_VERSION
-	nla_strscpy(sae.data, info->attrs[NL_SET_SAE_DATA], sae.length+1);
-#else
-	nla_strlcpy(sae.data, info->attrs[NL_SET_SAE_DATA], sae.length+1);
-#endif
+	if(sae.length <= 0 || sae.length > SET_SAE_MAX_LENGTH)
+		return -EINVAL;
+
+	nla_memcpy(sae.data, info->attrs[NL_SET_SAE_DATA], sae.length);
+
 	wim_skb = nrc_wim_alloc_skb(nrc_nw, WIM_CMD_SET_SAE,
 		sizeof(struct wim_set_sae_param));
 
-	// nrc_dbg_enable(NRC_DBG_WIM);
-	// nrc_dbg(NRC_DBG_WIM, "nrc-netlink driver log (after copying data)\n");
-	// nrc_dbg(NRC_DBG_WIM, "----------------------\n");
-	// nrc_dbg(NRC_DBG_WIM, "EID: %d\n", sae.eid);
-	// nrc_dbg(NRC_DBG_WIM, "Length: %d\n", sae.length);
-	// for (i=0; i<sae.length; i++) {
-	// 	if (i==0) nrc_dbg(NRC_DBG_WIM, "Data: %x", *(sae.data+i));
-	// 	else nrc_dbg(NRC_DBG_WIM, "%x", *(sae.data+i));
-	// }
-	// nrc_dbg(NRC_DBG_WIM, "\n----------------------\n");
-
 	if (!wim_skb)
 		return -EINVAL;
-
-	// nrc_dbg(NRC_DBG_WIM, "nrc-netlink driver log (add tlv)\n");
-	// nrc_dbg(NRC_DBG_WIM, "----------------------\n");
-	// nrc_dbg(NRC_DBG_WIM, "size of tlv : %d\n", sizeof(struct wim_set_sae_param));
 
 	nrc_wim_skb_add_tlv(wim_skb, WIM_TLV_SAE_PARAM, sizeof(struct wim_set_sae_param), &sae);
 	nrc_xmit_wim_request(nrc_nw, wim_skb);

@@ -550,6 +550,9 @@ static struct sk_buff *spi_rx_skb(struct spi_device *spi,
 		struct sk_buff *skb2 = dev_alloc_skb(
 				priv->slot[RX_SLOT].size * (nr_slot+1));
 
+		if(!skb2)
+			goto fail;
+
 		memcpy(skb2->data, skb->data, priv->slot[RX_SLOT].size);
 		dev_kfree_skb(skb);
 		skb = skb2;
@@ -716,6 +719,9 @@ static void spi_credit_skb(struct spi_device *spi)
 	}
 
 	skb = dev_alloc_skb(size);
+
+	if(!skb)
+		return;
 
 	p = skb->data;
 	hif = (void *)p;
